@@ -129,10 +129,6 @@
 </div>
 
 <script>
-/* =====================
-   PI INITIALIZATION
-===================== */
-Pi.init({ version: "2.0" });
 
 let username = "";
 const REWARD = 0.5;
@@ -275,8 +271,30 @@ function withdraw() {
 
 /* =====================
    START APP
-===================== */
-login();
+===================== */document.addEventListener("DOMContentLoaded", () => {
+  if (typeof Pi === "undefined") {
+    document.getElementById("user").innerText =
+      "❌ Fungua ndani ya Pi Browser";
+    return;
+  }
+
+  Pi.init({ version: "2.0" });
+
+  Pi.authenticate(
+    ["username"],
+    (auth) => {
+      username = auth.user.username;
+      document.getElementById("user").innerText =
+        "👤 " + username;
+      updateUI();
+      updateMineButton();
+    },
+    () => {
+      document.getElementById("user").innerText =
+        "❌ Pi Login Failed";
+    }
+  );
+});
 </script>
 
 </body>
