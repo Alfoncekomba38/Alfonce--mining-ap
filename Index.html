@@ -5,11 +5,10 @@
   <title>Alfonce Mining App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ✅ APP ICON -->
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
 
-  <!-- ✅ PI SDK -->
+  <!-- Pi SDK -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
   <style>
@@ -76,7 +75,6 @@
       margin-top: 20px;
     }
 
-    /* Mini coins animation */
     .coin {
       position: absolute;
       width: 16px;
@@ -87,16 +85,9 @@
     }
 
     @keyframes fly {
-      0% {
-        transform: translate(0, 0) scale(1);
-        opacity: 1;
-      }
-      100% {
-        transform: translate(var(--dx), var(--dy)) scale(0.5);
-        opacity: 0;
-      }
+      0% { transform: translate(0,0) scale(1); opacity:1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0.5); opacity:0; }
     }
-
   </style>
 </head>
 <body>
@@ -129,169 +120,98 @@
 </div>
 
 <script>
-
 let username = "";
 const REWARD = 0.5;
 const DAY = 24 * 60 * 60 * 1000;
 const RATE = 10;
 
-/* =====================
-   STORAGE
-===================== */
-function getData() {
-  return JSON.parse(localStorage.getItem(username)) || {
-    balance: 0,
-    lastMine: 0
-  };
+/* ===== STORAGE ===== */
+function getData() { 
+  return JSON.parse(localStorage.getItem(username)) || { balance: 0, lastMine: 0 }; 
+}
+function saveData(data) { 
+  localStorage.setItem(username, JSON.stringify(data)); 
+}
+function updateUI() { 
+  document.getElementById("balance").innerText = getData().balance.toFixed(2) + " AFTC"; 
+}
+function updateMineButton() { 
+  document.getElementById("mineBtn").disabled = Date.now() - getData().lastMine < DAY; 
 }
 
-function saveData(data) {
-  localStorage.setItem(username, JSON.stringify(data));
-}
-
-/* =====================
-   LOGIN
-===================== */
-async function login() {
-  try {
-    const auth = await Pi.authenticate(
-      ["username"],
-      () => {}
-    );
-
-    username = auth.user.username;
-    document.getElementById("user").innerText =
-      "👤 " + username;
-
-    updateUI();
-    updateMineButton();
-  } catch (e) {
-    document.getElementById("user").innerText =
-      "❌ Pi Login Failed";
-  }
-}
-
-/* =====================
-   UI
-===================== */
-function updateUI() {
-  const data = getData();
-  document.getElementById("balance").innerText =
-    data.balance.toFixed(2) + " AFTC";
-}
-
-function updateMineButton() {
-  const data = getData();
-  const now = Date.now();
-  const btn = document.getElementById("mineBtn");
-  btn.disabled = now - data.lastMine < DAY;
-}
-
-/* =====================
-   MINING
-===================== */
+/* ===== MINING + ANIMATION ===== */
 function mine() {
   const data = getData();
-  const now = Date.now();
   const btn = document.getElementById("mineBtn");
-
-  if (now - data.lastMine < DAY) {
-    document.getElementById("mineStatus").innerText =
-      "⏳ Subiri masaa 24 kabla ya kumine tena";
-    return;
+  if(Date.now() - data.lastMine < DAY) { 
+    document.getElementById("mineStatus").innerText = "⏳ Subiri masaa 24 kabla ya kumine tena"; 
+    return; 
   }
-
-  // Update balance
-  data.balance += REWARD;
-  data.lastMine = now;
+  data.balance += REWARD; 
+  data.lastMine = Date.now(); 
   saveData(data);
-
-  updateUI();
-  updateMineButton();
-  document.getElementById("mineStatus").innerText =
-    "✅ Umepata 0.5 AFTC";
-
-  // Coin animation
+  updateUI(); 
+  updateMineButton(); 
+  document.getElementById("mineStatus").innerText = "✅ Umepata 0.5 AFTC";
   createCoinExplosion(btn, 15);
 }
 
 function createCoinExplosion(parent, count) {
-  for (let i = 0; i < count; i++) {
-    const coin = document.createElement("div");
+  for(let i = 0; i < count; i++) {
+    const coin = document.createElement("div"); 
     coin.classList.add("coin");
-
     const dx = (Math.random() - 0.5) * 200 + "px";
     const dy = -Math.random() * 150 + "px";
-
-    coin.style.setProperty('--dx', dx);
+    coin.style.setProperty('--dx', dx); 
     coin.style.setProperty('--dy', dy);
-
     coin.style.left = (Math.random() * parent.offsetWidth) + 'px';
     coin.style.top = (Math.random() * parent.offsetHeight) + 'px';
-
-    parent.appendChild(coin);
-
+    parent.appendChild(coin); 
     setTimeout(() => coin.remove(), 800);
   }
 }
 
-/* =====================
-   WITHDRAW
-===================== */
+/* ===== WITHDRAW ===== */
 function withdraw() {
   const amount = parseFloat(document.getElementById("amount").value);
   const data = getData();
-
-  if (!amount || amount <= 0) {
-    document.getElementById("withdrawStatus").innerText =
-      "❌ Ingiza kiasi sahihi cha AFTC";
-    return;
+  if(!amount || amount <= 0) { 
+    document.getElementById("withdrawStatus").innerText = "❌ Ingiza kiasi sahihi cha AFTC"; 
+    return; 
   }
-
-  if (amount > data.balance) {
-    document.getElementById("withdrawStatus").innerText =
-      "❌ Balance haitoshi";
-    return;
+  if(amount > data.balance) { 
+    document.getElementById("withdrawStatus").innerText = "❌ Balance haitoshi"; 
+    return; 
   }
-
-  if (amount < RATE) {
-    document.getElementById("withdrawStatus").innerText =
-      "❌ Kima cha chini ni 10 AFTC";
-    return;
+  if(amount < RATE) { 
+    document.getElementById("withdrawStatus").innerText = "❌ Kima cha chini ni 10 AFTC"; 
+    return; 
   }
-
-  const piAmount = (amount / RATE).toFixed(2);
-  data.balance -= amount;
-  saveData(data);
+  data.balance -= amount; 
+  saveData(data); 
   updateUI();
-
-  document.getElementById("withdrawStatus").innerText =
-    "✅ Withdraw successful: " + piAmount + " Pi (demo)";
+  document.getElementById("withdrawStatus").innerText = `✅ Withdraw successful: ${(amount / RATE).toFixed(2)} Pi (demo)`;
 }
 
-/* =====================
-   START APP
-===================== */document.addEventListener("DOMContentLoaded", () => {
-  if (typeof Pi === "undefined") {
-    document.getElementById("user").innerText =
-      "❌ Fungua ndani ya Pi Browser";
-    return;
+/* ===== Pi SDK LOGIN ===== */
+document.addEventListener("DOMContentLoaded", () => {
+  if(typeof Pi === "undefined") { 
+    document.getElementById("user").innerText = "❌ Fungua ndani ya Pi Browser"; 
+    document.getElementById("mineBtn").disabled = true; 
+    return; 
   }
-
   Pi.init({ version: "2.0" });
-
   Pi.authenticate(
-    ["username"],
-    (auth) => {
+    ["username"], 
+    auth => {
       username = auth.user.username;
-      document.getElementById("user").innerText =
-        "👤 " + username;
-      updateUI();
+      document.getElementById("user").innerText = "👤 " + username;
+      updateUI(); 
       updateMineButton();
-    },
+    }, 
     () => {
-      document.getElementById("user").innerText =
-        "❌ Pi Login Failed";
+      document.getElementById("user").innerText = "❌ Pi Login Failed"; 
+      document.getElementById("mineBtn").disabled = true;
     }
   );
 });
