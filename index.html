@@ -160,20 +160,24 @@ document.addEventListener("DOMContentLoaded", () => {
   }, 5000);
 
   Pi.authenticate(
-    ["username"],
-    (auth) => {
-      clearTimeout(timeout);
-      username = auth.user.username;
-      userEl.innerText = "👤 " + username;
-      updateUI();
-      updateMineButton();
-    },
-    (err) => {
-      clearTimeout(timeout);
-      userEl.innerText = "❌ Pi Login Failed";
-      document.getElementById("mineBtn").disabled = true;
-    }
-  );
+  ["username"],
+  (auth) => {
+    clearTimeout(timeout);
+    username = auth.user.username;
+    userEl.innerText = "👤 " + username;
+    updateUI();
+    updateMineButton();
+  },
+  (err) => {
+    clearTimeout(timeout);
+    userEl.innerText = "❌ Pi Login Failed";
+    document.getElementById("mineBtn").disabled = true;
+  },
+  (payment) => {
+    // required by Pi SDK v2
+    console.log("Incomplete payment:", payment);
+  }
+);
 });
 </script>
 
